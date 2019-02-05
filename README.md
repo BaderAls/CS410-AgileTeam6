@@ -5,7 +5,7 @@ Members:
 - Steven lee
 - Cem Onder
 - Mike Ehart
-- Soroosh Dastgheibi
+- Soroosh Dastgheib
 -
 
 ADD YOUR NAME ABOVE AFTER YOU SETUP A REMOTE CONNECTION WITH THE ORIGIN REPO
