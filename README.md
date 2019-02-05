@@ -5,7 +5,7 @@ Members:
 - Steven lee
 - Cem Onder
 - Mike Ehart
-- 
+- Sean Lesch
 - 
 -
 
