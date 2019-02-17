@@ -11,7 +11,7 @@ public class FTPServerSideTest {
     @Test
     public void connectToServer() throws Exception {
 
-        FTPServerSide testServer = new FTPServerSide("10.0.0.248",2121);// hostaddress/port number goes hre;
+        FTPServerSide testServer = new FTPServerSide("10.0.0.0",2121);// hostaddress/port number goes hre;
 
 
         assertEquals(1,testServer.ConnectToServer());
@@ -20,7 +20,7 @@ public class FTPServerSideTest {
     @Test
     public void uploadToServer() throws Exception {
 
-        FTPServerSide testServer = new FTPServerSide("10.0.0.248",2121);
+        FTPServerSide testServer = new FTPServerSide("10.0.0.0",2121);
         testServer.ConnectToServer();
 
         // ALL OF THESE FILES EXIST, SO I EXPECT THE FUNCTION TO RETURN NULL
