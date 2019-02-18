@@ -1,5 +1,6 @@
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Scanner;
 
 public class MainMenu {
@@ -19,6 +20,7 @@ public class MainMenu {
 
 
         do {
+            System.out.println();
             System.out.println("*-Group 6 FTPClient-*");
             System.out.println("Type 'connect' to establish connection to the server ");
             System.out.println("Type 'quit' to exit the program");
@@ -52,7 +54,7 @@ public class MainMenu {
                             exceptionCounter = 2;
 
                             do {
-
+                                System.out.println();
                                 System.out.println("-*Group 6 FTPClient-* ");
                                 System.out.println("Type 'upload' to upload a file to the server");
                                 System.out.println("Type 'disconnect' to stop the current session");
@@ -62,21 +64,41 @@ public class MainMenu {
 
                                 if(selection.equals("upload")){
 
-                                    String filePath;
-
-                                    System.out.println("Enter File Path:  ");
-
-                                    filePath = scanner.nextLine();
-                                    File myFile = new File(filePath);
+                                    ArrayList<File> myFiles = new ArrayList<File>();
+                                    String choice = "";
+                                    do {
+                                        String filePath;
+                                        System.out.println("Enter File Path:  ");
+                                        filePath = scanner.nextLine();
+                                        File myFile = new File(filePath);
+                                        myFiles.add(myFile);
+                                        System.out.println("Do you want to add more ? (yes/no)");
+                                        choice = scanner.nextLine();
+                                    }while(!choice.equals("no"));
 
                                     try{
 
-                                        boolean response;
-                                        response= myftp.uploadToServer(myFile);
+                                        ArrayList<File> failedFiles;
+                                        failedFiles= myftp.uploadToServer(myFiles);
 
-                                        if(response == true){
+                                        if(failedFiles.size() == 0){
 
-                                            System.out.println("File uploaded successfully");
+                                            System.out.println("All files uploaded successfully");
+                                        }
+                                        else{
+
+                                            System.out.println("WARNING: One or more file transfer(s) failed!");
+                                            System.out.println("Failed to transfer: ");
+                                            int i = 1;
+
+                                            for(File x : failedFiles){
+
+                                                System.out.println(i + ". "+x.getName());
+                                                i++;
+                                            }
+
+                                            System.out.println("TIP: Make sure you typed the correct file path");
+
                                         }
                                     }
                                     catch (IOException e){

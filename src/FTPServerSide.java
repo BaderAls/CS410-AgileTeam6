@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 
 
 /* ServerSide, as opposed to localside */
@@ -40,23 +41,47 @@ public class FTPServerSide extends FTP {
         return 1;
     }
 
-    /*Uploads file to the server */
-    public boolean uploadToServer(File myFile) throws IOException{
+    /* *** This function takes an a list of files and returns a list of files  have failed the transfer
+     *     procedure. Function checks each File on the list to make sure they "exist", if the file exists, then
+     *     it transfers the file to the server. If the file doesn't exist in the given path, the file is added to the
+     *     failedFiles list.
+     *
+     *      UNIT TEST BY ASSERTING THE RETURN TO BE NULL OR NOT NULL ( failedFiles.size() == {int value} ) */
+
+
+    public ArrayList<File> uploadToServer(ArrayList<File> myFiles) throws IOException{
 
         boolean uploaded = false;
+        ArrayList<File> failedFiles = new ArrayList<File>();
+        String fileName = "";
 
         ftp.setFileType(FTP.BINARY_FILE_TYPE);
         ftp.setFileTransferMode(FTP.BINARY_FILE_TYPE);
 
-        InputStream is = new FileInputStream(myFile);
+        InputStream is = null;
 
-        String fileName = myFile.getName();
 
-        uploaded = ftp.storeFile(fileName, is);
+        for (File file : myFiles) {   // go through all the files
 
-        is.close();
+            if(file.exists()) {     //check if exists. If it does... transfer
 
-        return uploaded;
+                is = new FileInputStream(file);
+
+                fileName = file.getName();
+
+                uploaded = ftp.storeFile(fileName, is);
+            }
+            else{  // ... If the file doesn't exist, add it to the failed files list.
+                failedFiles.add(file);
+            }
+        }
+
+        if (is != null) {
+
+            is.close();
+        }
+
+        return failedFiles;
     }
 
     public boolean logout(){
