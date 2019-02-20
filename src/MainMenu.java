@@ -59,6 +59,7 @@ public class MainMenu {
                                 System.out.println("Type 'upload' to upload a file to the server");
                                 System.out.println("Type 'disconnect' to stop the current session");
                                 System.out.println("Type 'quit' to exit the program");
+                                System.out.println("Type 'display' to display the contents of the directory.");
 
                                 selection = scanner.nextLine();
 
@@ -127,6 +128,10 @@ public class MainMenu {
                                         System.out.println("Not even connected bruh");
                                     }
                                 }
+                                else if (selection.equals("display")){
+                                    myftp.displayRemote();
+                                }
+
                             } while (connectionCheck && (!selection.equals("quit")));
                         }
                     } catch (IOException e) {

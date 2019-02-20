@@ -28,7 +28,7 @@ public class FTPServerSide extends FTP {
         int reply;   // local variable to check initial connection status.
 
         /* Connect to the specified server on specified port, need ftp.login() even for anon connections */
-        System.out.println("Connecting too..." + serverAddress);
+        System.out.println("Connecting to..." + serverAddress);
         ftp.connect(serverAddress,port);
         ftp.login("anonymous","");
 
@@ -96,6 +96,23 @@ public class FTPServerSide extends FTP {
         }
 
         return false;
+    }
+
+    public void displayRemote() throws IOException {
+
+        String [] FileNames = ftp.listNames();
+
+        if(FileNames == null){
+            System.out.println("Error in obtaining file names!");
+        }
+        else if(FileNames.length == 0){
+            System.out.printf("No files in current remote directory.");
+        }
+        else{
+            for(int i = 0; i < FileNames.length; i++){
+                System.out.println(FileNames[i]);
+            }
+        }
     }
 
 }
