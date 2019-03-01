@@ -1,11 +1,13 @@
 import org.apache.commons.net.ftp.*;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
-
+import java.util.List;
+import java.util.Scanner;
 
 /* ServerSide, as opposed to localside */
 public class FTPServerSide extends FTP {
@@ -30,9 +32,11 @@ public class FTPServerSide extends FTP {
         /* Connect to the specified server on specified port, need ftp.login() even for anon connections */
         System.out.println("Connecting to..." + serverAddress);
         ftp.connect(serverAddress,port);
-        ftp.login("anonymous","");
-
+        if (!LoginToServer()){
+            return -1;
+        }
         reply = ftp.getReplyCode();
+        System.out.println(reply);
         if (!FTPReply.isPositiveCompletion((reply))) {
 
             return -1;
@@ -40,6 +44,48 @@ public class FTPServerSide extends FTP {
 
         return 1;
     }
+
+    /*  This function attempts to get valid login credecntials from the users IO.
+    If invalid input is recieved, the function should log the anonymous user connection
+    out, restablish connection and try again.
+ */
+    public boolean LoginToServer() throws IOException{
+        Scanner sc = new Scanner(System.in);
+        String username = "";
+        String password = "";
+        int reply;
+        boolean cont = true;
+        String selection;
+        System.out.println("Would you like to use a saved connection? (y/n)");
+        selection = sc.nextLine();
+        if (selection.equals("y")){
+            useSavedConnection();
+        }
+        else {
+            while (cont) {
+                System.out.println("Please Enter Username and Password (or quit as either to exit");
+                System.out.println("Username: \t");
+                username = sc.nextLine();
+                System.out.println("Password");
+                password = sc.nextLine();
+                if (username.equals("quit") || password.equals("quit"))
+                    return false;
+                ftp.login(username, password);
+                reply = ftp.getReplyCode();
+                if (reply != 230) {
+                    System.out.println("Invalid User Login");
+                    ftp.logout();
+                    ftp.connect(serverAddress, port);
+                } else {
+                    System.out.println("Login Successful: Logged in as " + username);
+                    cont = false;
+                }
+            }
+        }
+        saveUserConnection(username, password);
+        return true;
+    }
+
 
     /* *** This function takes an a list of files and returns a list of files  have failed the transfer
      *     procedure. Function checks each File on the list to make sure they "exist", if the file exists, then
@@ -115,4 +161,27 @@ public class FTPServerSide extends FTP {
         }
     }
 
+    public void saveUserConnection(String username, String password) throws IOException{
+        List<String> lines = new ArrayList<>();
+        lines.add(username);
+        lines.add(password);
+        Path file = Paths.get("savedCred.txt");
+        Files.write(file, lines, Charset.forName("UTF-8"));
+    }
+
+    public void useSavedConnection() throws IOException{
+        BufferedReader reader = new BufferedReader(new FileReader("savedCred.txt"));
+        String username = reader.readLine();
+        String password = reader.readLine();
+        System.out.println(username + password);
+        ftp.login(username, password);
+        int reply = ftp.getReplyCode();
+        if (reply != 230){
+            System.out.println("Error in Saved Connection");
+            ftp.logout();
+        }
+        else{
+            System.out.println("Connected to FTP user: "+username);
+        }
+    }
 }
