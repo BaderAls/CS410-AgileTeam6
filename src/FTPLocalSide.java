@@ -13,7 +13,7 @@ public class FTPLocalSide {
   }
 
   /* List directories and files on the local directory */
-  public void displayLocal(String localPath) throws IOException {
+  public void displayLocal() throws IOException {
     File[] listOfFiles = directory.listFiles();
 
     if (listOfFiles != null && listOfFiles.length > 0) {

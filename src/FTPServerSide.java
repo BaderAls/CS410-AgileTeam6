@@ -157,6 +157,50 @@ public class FTPServerSide extends FTP {
         }
     }
 
+
+    // HELPER FUNCTION THAT I USE THAT IS NOT CALLED ANYWHERE FROM THE PROGRAM)
+    public void displayCertainDirectory (String pathname) throws IOException{
+
+        String [] FileNames = ftp.listNames(pathname);
+
+        if (FileNames == null) {
+            System.out.println("Error in obtaining file names!");
+        } else if (FileNames.length == 0) {
+            System.out.printf("No files in specified remote directory.");
+        } else {
+            for (int i = 0; i < FileNames.length; i++) {
+                System.out.println(FileNames[i]);
+            }
+        }
+    }
+
+    /* This function Changes directory to be able to download from a certain directory, or display a certain
+        directory */
+    public boolean ChangeDirectory(String pathname) throws  IOException{
+
+        boolean ret = ftp.changeWorkingDirectory(pathname);
+
+        if (!ret){
+            System.out.println("No such directory!");
+        }
+
+        return ret;
+
+    }
+
+    /* This function reverts back to the main directory once it is done. Needs the int count value (number of navigated
+     * directories) before being called */
+    public void ChangeToMainDirectory(int count) throws IOException{
+
+        int counter = 0;
+
+        while (counter < count){
+
+            ftp.changeToParentDirectory();
+            counter ++;
+        }
+    }
+
     /* List directories & files on the local directory */
     public void displayLocal() throws IOException {
         File folder = new File(localPath);
@@ -174,14 +218,32 @@ public class FTPServerSide extends FTP {
         }
     }
 
-    /* Get a file from the remote direcotry */
-    public void getRemoteFile(String remoteFilePath, String localFilePath) {
-        try (FileOutputStream fos = new FileOutputStream(localFilePath)) {
-            this.ftp.retrieveFile(remoteFilePath, fos);
-        } catch (IOException e) {
-            System.err.println("Error!");
+    /* This function downloads all the files in the passed list to the localfilepath entered.
+     * returns all the file names that have failed to download */
+    public ArrayList<String> getRemoteFile(ArrayList<String> remoteFilePaths, String localFilePath)throws IOException {
+
+        OutputStream os = null;
+        ArrayList<String> failedFiles = new ArrayList<String>();
+        boolean ret;
+
+        for (String filepath : remoteFilePaths){
+
+            File file = new File(localFilePath +"/"+ filepath);
+            os = new FileOutputStream(file);
+            ret = ftp.retrieveFile(filepath,os);
+
+            if (!ret){
+                failedFiles.add(filepath);
+            }
         }
+
+        if(os != null){
+            os.close();
+        }
+
+        return failedFiles;
     }
+
 
     /*saves username and password of last login.*/
     public void saveUserConnection(String username, String password) throws IOException{
