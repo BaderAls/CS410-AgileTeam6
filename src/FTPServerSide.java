@@ -270,4 +270,148 @@ public class FTPServerSide extends FTP {
             System.out.println("Connected to FTP user: "+username);
         }
     }
+
+    /*Print the last server's response  */
+    private static void showServerReply(FTPClient ftpClient) {
+        String[] replies = ftpClient.getReplyStrings();
+        if (replies != null && replies.length > 0) {
+            for (String aReply : replies) {
+                System.out.println("SERVER: " + aReply);
+            }
+        }
+    }
+
+    /*Checks if a directory exists on remote server*/
+    public boolean directoryExists(String dirPath) throws IOException {
+        String currentDirectory = ftp.printWorkingDirectory();
+        try {
+            return ftp.changeWorkingDirectory(dirPath);
+        }
+        finally {
+            ftp.changeWorkingDirectory(currentDirectory);
+        }
+    }
+
+    /*Makes a new directory on the remote server*/
+    public void newDirectory(String dirToCreate) throws IOException{
+        boolean success = ftp.makeDirectory(dirToCreate);
+        if (success) {
+            System.out.println("Successfully created directory: " + dirToCreate);
+        } else {
+            System.out.println("Failed to create directory. See server's reply.");
+        }
+    }
+
+
+    /*Upload a whole directory (including its nested sub directories and files) to a FTP server recursively.*/
+    public boolean copyDirectory(String remoteDirPath, String localParentDir, String remoteParentDir)
+            throws IOException {
+
+        boolean successful = true;
+        String inremoteFilePath = remoteDirPath + "/" + remoteParentDir;
+        ftp.makeDirectory(inremoteFilePath);
+        File localDir = new File(localParentDir);
+        File[] subFiles = localDir.listFiles();
+        if (subFiles != null && subFiles.length > 0) {
+            for (File item : subFiles) {
+                String remoteFilePath = remoteDirPath + "/" + remoteParentDir
+                        + "/" + item.getName();
+                if (remoteParentDir.equals("")) {
+                    remoteFilePath = remoteDirPath + "/" + item.getName();
+                }
+
+                if (item.isFile()) {
+                    // upload the file
+                    String localFilePath = item.getAbsolutePath();
+                    File localFile = new File(localFilePath);
+                    boolean uploaded;
+                    InputStream inputStream = new FileInputStream(localFile);
+                    try {
+                        ftp.setFileType(FTP.BINARY_FILE_TYPE);
+                        uploaded = ftp.storeFile(remoteFilePath, inputStream);
+                    } finally {
+                        inputStream.close();
+                    }
+                    if (!uploaded) {
+                        successful = false;
+                    }
+                } else {
+                    // create directory on the server
+                    boolean created = ftp.makeDirectory(remoteFilePath);
+                    if (!created) {
+                        successful = false;
+                    }
+
+                    // upload the sub directory
+                    String parent = remoteParentDir + "/" + item.getName();
+                    if (remoteParentDir.equals("")) {
+                        parent = item.getName();
+                    }
+
+                    localParentDir = item.getAbsolutePath();
+                    if(!(copyDirectory(remoteDirPath, localParentDir,
+                            parent))){
+                        successful = false;
+                    }
+                }
+            }
+        }
+        return successful;
+    }
+
+
+    /* Removes a directory and all its sub files and sub directories recursively.*/
+    public boolean deleteDirectory(String parentDir, String currentDir) throws IOException{
+        String dirToList = parentDir;
+        boolean successful = true;
+        if (!currentDir.equals("")) {
+            dirToList += "/" + currentDir;
+        }
+
+        FTPFile[] subFiles = ftp.listFiles(dirToList);
+
+        if (subFiles != null && subFiles.length > 0) {
+            for (FTPFile aFile : subFiles) {
+                String currentFileName = aFile.getName();
+                if (currentFileName.equals(".") || currentFileName.equals("..")) {
+                    // skip parent directory and the directory itself
+                    continue;
+                }
+                String filePath = parentDir + "/" + currentDir + "/"
+                        + currentFileName;
+                if (currentDir.equals("")) {
+                    filePath = parentDir + "/" + currentFileName;
+                }
+
+                if (aFile.isDirectory()) {
+                    // remove the sub directory
+                    if(!(deleteDirectory( dirToList, currentFileName))){
+                        successful = false;
+                    }
+                } else {
+                    // delete the file
+                    boolean deleted = ftp.deleteFile(filePath);
+                    if (!deleted) {
+                        successful = false;
+                    }
+                }
+            }
+
+            // finally, remove the directory itself
+            System.out.println(dirToList);
+            boolean removed = ftp.removeDirectory(dirToList);
+            if (!removed) {
+                successful = false;
+            }
+        }
+        else {
+            boolean removed = ftp.removeDirectory(dirToList);
+            if (!removed) {
+                successful = false;
+            }
+        }
+        return successful;
+    }
+
+
 } /* END */
