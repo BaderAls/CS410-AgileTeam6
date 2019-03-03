@@ -107,6 +107,24 @@ public class FTPServerSideTest {
 
     }
 
+    @Test
+    public void deleteFromServer() throws Exception{
+
+        FTPServerSide testServer = new FTPServerSide("127.0.0.1",21);
+        testServer.ConnectToServer();
+
+        File toDelete = new File("C:/testfiles/test.txt");
+        ArrayList<File> deleteList = new ArrayList<File>();
+
+        deleteList.add(toDelete);
+
+        ArrayList<File> result = testServer.uploadToServer(deleteList);
+
+        if(result.size() > 0){
+            assertEquals(true, testServer.deleteRemoteFile("/test.txt"));
+        }
+    }
+
 
     // PASSES FOR MULTIPLE SCENARIOS
 

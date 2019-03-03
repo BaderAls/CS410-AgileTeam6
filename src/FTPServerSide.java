@@ -174,6 +174,14 @@ public class FTPServerSide extends FTP {
         }
     }
 
+    public boolean deleteRemoteFile(String pathname) throws IOException{
+        if(pathname.length() == 0)
+            return false;
+
+        return ftp.deleteFile(pathname);
+    }
+
+
     /* This function Changes directory to be able to download from a certain directory, or display a certain
         directory */
     public boolean ChangeDirectory(String pathname) throws  IOException{
