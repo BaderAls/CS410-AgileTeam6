@@ -9,8 +9,15 @@ public class FTPLocalSide {
 
   /* Class constructor */
   public FTPLocalSide(String localPath) {
+
     directory = new File(localPath);
   }
+
+  public  FTPLocalSide(){
+
+    directory = null;
+  }
+
 
   /* List directories and files on the local directory */
   public void displayLocal() throws IOException {
@@ -47,5 +54,17 @@ public class FTPLocalSide {
           foundList[counter++] = filesList[i];
     }
     return foundList;
+  }
+
+  public boolean ChangeFileName(String localPath, String renameTo){
+
+    String location = localPath.substring(0,localPath.lastIndexOf("/"));
+
+    File oldfile = new File(localPath);
+
+    File newfile = new File(location+"/"+renameTo);
+
+    return oldfile.renameTo(newfile);
+
   }
 } /* END */

@@ -10,6 +10,8 @@ public class MainMenu {
 
         int portNum;
         String hostAddress;
+        FTPLocalSide mylocal = new FTPLocalSide();
+       // FTPLocalSide mylocal2 = new FTPLocalSide(""); //
 
 
         Scanner scanner = new Scanner(System.in);
@@ -23,6 +25,7 @@ public class MainMenu {
             System.out.println();
             System.out.println("*-Group 6 FTPClient-*");
             System.out.println("Type 'connect' to establish connection to the server ");
+            System.out.println("Type rename to rename a file on local disk");
             System.out.println("Type 'quit' to exit the program");
 
             selection = scanner.nextLine();
@@ -72,7 +75,30 @@ public class MainMenu {
 
                                     ArrayList<File> myFiles = new ArrayList<File>();
                                     String choice = "";
+                                    String choice2 = "";
+                                    int directcount = 0;
+
+                                    do{
+                                        myftp.displayRemote();
+                                        System.out.println("Is this the directory do you want to upload to ? (yes/no)");
+                                        choice2 = scanner.nextLine();
+
+                                        if(choice2.equals("no")){
+                                            String targetdirectory = "";
+                                            System.out.println("Type in the directory you want to upload to");
+                                            targetdirectory = scanner.nextLine();
+
+                                            boolean someret = myftp.ChangeDirectory(targetdirectory);
+
+                                            if(someret) {
+                                                directcount++;
+                                            }
+                                        }
+
+                                    } while(!choice2.equals("yes"));
+
                                     do {
+
                                         String filePath;
                                         System.out.println("Enter File Path:  ");
                                         filePath = scanner.nextLine();
@@ -111,6 +137,8 @@ public class MainMenu {
 
                                         System.out.println("File upload failed");
                                     }
+
+                                    myftp.ChangeToMainDirectory(directcount);
                                 }
 
                                 else if (selection.equals("download")){
@@ -313,6 +341,27 @@ public class MainMenu {
                         }
                     }
                 }
+            }
+            else if (selection.equals("rename")){
+
+                String oldpath = "";
+                String newname = "";
+                boolean retstat = false;
+                System.out.println("Type the path of the file you want to rename");
+                oldpath = scanner.nextLine();
+
+                System.out.println("Type the new name you want to give to this file");
+                newname = scanner.nextLine();
+
+                retstat = mylocal.ChangeFileName(oldpath,newname);
+
+                if(retstat){
+                    System.out.println("Sucessfully renamed the file to: " + newname);
+                }
+                else{
+                    System.out.println("Renaming failed");
+                }
+
             }
         }while(!selection.equals("quit"));
     }
