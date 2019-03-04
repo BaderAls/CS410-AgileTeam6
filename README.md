@@ -8,7 +8,4 @@ Members:
 - Soroosh Dastgheibi
 - Sean Lesch
 
-ADD YOUR NAME ABOVE AFTER YOU SETUP A REMOTE CONNECTION WITH THE ORIGIN REPO
-THEN PUSH THE README TO ORIGIN MASTER TO MAKE SURE YOU SET IT UP CORRECTLY
-
-g
+An implementation of the final project assigned on Winter 2018's quarter for the Agile Software Development class at PSU. This project represents the Agile development process for designing a File Transfer Protocol application.
