@@ -13,30 +13,27 @@ import java.util.Scanner;
 /* ServerSide, as opposed to LocalSide */
 public class FTPServerSide extends FTP {
 
-    private String localPath;
     private FTPClient ftp;
-    private String serverAddress;
+    private String address;
     private int port;
 
-    /* allocate the SeverSide data */
-    public FTPServerSide(String serverAdd, int connection_port) {
+    /* Class constructor */
+    public FTPServerSide(String serverAdd, int connectPort) {
         ftp = new FTPClient();
-        serverAddress = serverAdd;
-        port = connection_port;
+        address = serverAdd;
+        port = connectPort;
     }
 
-    /* Connects to the server */
+    /*
+   * Connects to the server. Connect to the specified server on specified port,
+   * need ftp.login() even for anonymous connections
+     */
     public int ConnectToServer() throws IOException {
         int reply; // local variable to check initial connection status.
 
-        /*
-         * Connect to the specified server on specified port, need ftp.login() even for
-         * anon connections
-         */
-        System.out.println("Connecting to..." + serverAddress);
-        ftp.connect(serverAddress, port);
-        if (!LoginToServer())
-            return -1;
+        System.out.println("Connecting to..." + address);
+        ftp.connect(address, port);
+        ftp.login("anonymous", "");
         reply = ftp.getReplyCode();
         if (!FTPReply.isPositiveCompletion((reply))) {
             return -1;
@@ -45,10 +42,10 @@ public class FTPServerSide extends FTP {
     }
 
     /*  This function attempts to get valid login credentials from the users IO.
-    If invalid input is received, the function should log the anonymous user connection
-    out, reestablish connection and try again.
-    */
-    public boolean LoginToServer() throws IOException{
+     *  If invalid input is received, the function should log the anonymous user connection
+     *  out, reestablish connection and try again.
+     */
+    public boolean LoginToServer() throws IOException {
         Scanner sc = new Scanner(System.in);
         String username = "";
         String password = "";
@@ -57,24 +54,24 @@ public class FTPServerSide extends FTP {
         String selection;
         System.out.println("Would you like to use a saved connection? (y/n)");
         selection = sc.nextLine();
-        if (selection.equals("y")){
+        if (selection.equals("y")) {
             useSavedConnection();
-        }
-        else {
+        } else {
             while (cont) {
                 System.out.println("Please Enter Username and Password (or quit as either to exit");
                 System.out.println("Username: \t");
                 username = sc.nextLine();
                 System.out.println("Password");
                 password = sc.nextLine();
-                if (username.equals("quit") || password.equals("quit"))
+                if (username.equals("quit") || password.equals("quit")) {
                     return false;
+                }
                 ftp.login(username, password);
                 reply = ftp.getReplyCode();
                 if (reply != 230) {
                     System.out.println("Invalid User Login");
                     ftp.logout();
-                    ftp.connect(serverAddress, port);
+                    ftp.connect(address, port);
                 } else {
                     System.out.println("Login Successful: Logged in as " + username);
                     cont = false;
@@ -86,7 +83,7 @@ public class FTPServerSide extends FTP {
     }
 
     /*
-     * *** This function takes an a list of files and returns a list of files have
+     * This function takes an a list of files and returns a list of files have
      * failed the transfer procedure. Function checks each File on the list to make
      * sure they "exist", if the file exists, then it transfers the file to the
      * server. If the file doesn't exist in the given path, the file is added to the
@@ -157,11 +154,10 @@ public class FTPServerSide extends FTP {
         }
     }
 
-
     // HELPER FUNCTION THAT I USE THAT IS NOT CALLED ANYWHERE FROM THE PROGRAM)
-    public void displayCertainDirectory (String pathname) throws IOException{
+    public void displayCertainDirectory(String pathname) throws IOException {
 
-        String [] FileNames = ftp.listNames(pathname);
+        String[] FileNames = ftp.listNames(pathname);
 
         if (FileNames == null) {
             System.out.println("Error in obtaining file names!");
@@ -174,9 +170,10 @@ public class FTPServerSide extends FTP {
         }
     }
 
-    public boolean deleteRemoteFile(String pathname) throws IOException{
-        if(pathname.length() == 0)
+    public boolean deleteRemoteFile(String pathname) throws IOException {
+        if (pathname.length() == 0) {
             return false;
+        }
 
         return ftp.deleteFile(pathname);
     }
@@ -184,11 +181,11 @@ public class FTPServerSide extends FTP {
 
     /* This function Changes directory to be able to download from a certain directory, or display a certain
         directory */
-    public boolean ChangeDirectory(String pathname) throws  IOException{
+    public boolean ChangeDirectory(String pathname) throws IOException {
 
         boolean ret = ftp.changeWorkingDirectory(pathname);
 
-        if (!ret){
+        if (!ret) {
             System.out.println("No such directory!");
         }
 
@@ -198,54 +195,37 @@ public class FTPServerSide extends FTP {
 
     /* This function reverts back to the main directory once it is done. Needs the int count value (number of navigated
      * directories) before being called */
-    public void ChangeToMainDirectory(int count) throws IOException{
+    public void ChangeToMainDirectory(int count) throws IOException {
 
         int counter = 0;
 
-        while (counter < count){
+        while (counter < count) {
 
             ftp.changeToParentDirectory();
-            counter ++;
-        }
-    }
-
-    /* List directories & files on the local directory */
-    public void displayLocal() throws IOException {
-        File folder = new File(localPath);
-        File[] listOfFiles = folder.listFiles();
-
-        if (listOfFiles == null)
-            System.out.println("Error in obtaining list of files!");
-
-        for (int i = 0; i < listOfFiles.length; ++i) {
-            if (listOfFiles[i].isFile()) {
-                System.out.println(listOfFiles[i].getName());
-            } else if (listOfFiles[i].isDirectory()) {
-                System.out.println(listOfFiles[i].getName());
-            }
+            counter++;
         }
     }
 
     /* This function downloads all the files in the passed list to the localfilepath entered.
      * returns all the file names that have failed to download */
-    public ArrayList<String> getRemoteFile(ArrayList<String> remoteFilePaths, String localFilePath)throws IOException {
+    public ArrayList<String> getRemoteFile(ArrayList<String> remoteFilePaths, String localFilePath) throws IOException {
 
         OutputStream os = null;
         ArrayList<String> failedFiles = new ArrayList<String>();
         boolean ret;
 
-        for (String filepath : remoteFilePaths){
+        for (String filepath : remoteFilePaths) {
 
-            File file = new File(localFilePath +"/"+ filepath);
+            File file = new File(localFilePath + "/" + filepath);
             os = new FileOutputStream(file);
-            ret = ftp.retrieveFile(filepath,os);
+            ret = ftp.retrieveFile(filepath, os);
 
-            if (!ret){
+            if (!ret) {
                 failedFiles.add(filepath);
             }
         }
 
-        if(os != null){
+        if (os != null) {
             os.close();
         }
 
@@ -254,7 +234,7 @@ public class FTPServerSide extends FTP {
 
 
     /*saves username and password of last login.*/
-    public void saveUserConnection(String username, String password) throws IOException{
+    public void saveUserConnection(String username, String password) throws IOException {
         List<String> lines = new ArrayList<>();
         lines.add(username);
         lines.add(password);
@@ -263,19 +243,18 @@ public class FTPServerSide extends FTP {
     }
 
     /*reads from last used login to establish a new connection*/
-    public void useSavedConnection() throws IOException{
+    public void useSavedConnection() throws IOException {
         BufferedReader reader = new BufferedReader(new FileReader("savedCred.txt"));
         String username = reader.readLine();
         String password = reader.readLine();
         System.out.println(username + password);
         ftp.login(username, password);
         int reply = ftp.getReplyCode();
-        if (reply != 230){
+        if (reply != 230) {
             System.out.println("Error in Saved Connection");
             ftp.logout();
-        }
-        else{
-            System.out.println("Connected to FTP user: "+username);
+        } else {
+            System.out.println("Connected to FTP user: " + username);
         }
     }
 
@@ -294,14 +273,13 @@ public class FTPServerSide extends FTP {
         String currentDirectory = ftp.printWorkingDirectory();
         try {
             return ftp.changeWorkingDirectory(dirPath);
-        }
-        finally {
+        } finally {
             ftp.changeWorkingDirectory(currentDirectory);
         }
     }
 
     /*Makes a new directory on the remote server*/
-    public void newDirectory(String dirToCreate) throws IOException{
+    public void newDirectory(String dirToCreate) throws IOException {
         boolean success = ftp.makeDirectory(dirToCreate);
         if (success) {
             System.out.println("Successfully created directory: " + dirToCreate);
@@ -357,8 +335,8 @@ public class FTPServerSide extends FTP {
                     }
 
                     localParentDir = item.getAbsolutePath();
-                    if(!(copyDirectory(remoteDirPath, localParentDir,
-                            parent))){
+                    if (!(copyDirectory(remoteDirPath, localParentDir,
+                            parent))) {
                         successful = false;
                     }
                 }
@@ -369,7 +347,7 @@ public class FTPServerSide extends FTP {
 
 
     /* Removes a directory and all its sub files and sub directories recursively.*/
-    public boolean deleteDirectory(String parentDir, String currentDir) throws IOException{
+    public boolean deleteDirectory(String parentDir, String currentDir) throws IOException {
         String dirToList = parentDir;
         boolean successful = true;
         if (!currentDir.equals("")) {
@@ -393,7 +371,7 @@ public class FTPServerSide extends FTP {
 
                 if (aFile.isDirectory()) {
                     // remove the sub directory
-                    if(!(deleteDirectory( dirToList, currentFileName))){
+                    if (!(deleteDirectory(dirToList, currentFileName))) {
                         successful = false;
                     }
                 } else {
@@ -411,8 +389,7 @@ public class FTPServerSide extends FTP {
             if (!removed) {
                 successful = false;
             }
-        }
-        else {
+        } else {
             boolean removed = ftp.removeDirectory(dirToList);
             if (!removed) {
                 successful = false;
@@ -421,5 +398,24 @@ public class FTPServerSide extends FTP {
         return successful;
     }
 
+    /*
+   * Search for a remote file and return a list of all the files that matches the
+   * key name of the file
+     */
+    public FTPFile[] findRemoteFiles(String keyName, String remotePath) throws IOException {
+        FTPFile[] filesList = ftp.listFiles(remotePath);
+        FTPFile[] foundList = null;
 
-} /* END */
+        if (filesList != null && filesList.length > 0) {
+            foundList = new FTPFile[filesList.length];
+            int counter = 0;
+            for (int i = 0; i < filesList.length; ++i) {
+                if (filesList[i].getName() == keyName) {
+                    foundList[counter++] = filesList[i];
+                }
+            }
+        }
+        return foundList;
+    }
+}
+/* END */
