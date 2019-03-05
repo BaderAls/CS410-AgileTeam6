@@ -1,6 +1,6 @@
-CS410 - Group Project (*TEAM 6*)
+**CS410 - Group Project (TEAM 6)**
 
-*Members*:
+**Members:**
 - Bader Alshaya
 - Steven lee
 - Cem Onder
