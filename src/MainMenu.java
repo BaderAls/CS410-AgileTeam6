@@ -23,6 +23,7 @@ public class MainMenu {
             System.out.println();
             System.out.println("*-Group 6 FTPClient-*");
             System.out.println("Type 'connect' to establish connection to the server ");
+            System.out.println("Type 'displaylocal' to display directories and files on local disk");
             System.out.println("Type rename to rename a file on local disk");
             System.out.println("Type 'quit' to exit the program");
 
@@ -342,6 +343,46 @@ public class MainMenu {
                     System.out.println("Renaming failed");
                 }
 
+            }
+
+            else if (selection.equals("displaylocal")){
+
+                String ldisplayselection = "";
+                String somepath = "";
+
+                System.out.println("Enter the local disk path you want to display");
+                somepath = scanner.nextLine();
+
+                FTPLocalSide mylocalftp = new FTPLocalSide(somepath);
+
+                do{
+                    try {
+
+                        mylocalftp.displayLocal();
+
+                        System.out.println("Do you want to go further in the directory? (yes/no)");
+
+                        ldisplayselection = scanner.nextLine();
+
+                        if(ldisplayselection.equals("yes")){
+
+                            String furtherString = "";
+                            boolean someret = false;
+                            System.out.println("Type in the folder/directory name");
+                            furtherString = scanner.nextLine();
+                            someret =  mylocalftp.changeDirectory(furtherString);
+
+                            if(!someret){
+                                System.out.println("Directory doesn't exist");
+                            }
+                        }
+                    }
+                    catch (IOException e){
+
+                        System.out.println("Problem encountered");
+
+                    }
+                }while (!ldisplayselection.equals("no"));
             }
         } while (!selection.equals("quit"));
     }

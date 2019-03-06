@@ -8,6 +8,7 @@ import java.io.IOException;
 public class FTPLocalSide {
 
     private File directory;
+    private String directoryString;
 
     /* Default Class constructor */
     public FTPLocalSide() {
@@ -17,6 +18,24 @@ public class FTPLocalSide {
     /* Class constructor */
     public FTPLocalSide(String localPath) {
         directory = new File(localPath);
+        directoryString = localPath;
+    }
+
+    public boolean changeDirectory(String somepath){
+
+        String newpath = directoryString + "/" + somepath;
+        File directorywrapper = new File(newpath);
+
+        if(directorywrapper.exists()){
+
+            directory = directorywrapper;
+            directoryString = newpath;
+            return true;
+        }
+        else{
+            return false;
+        }
+
     }
 
     /* List directories and files on the local directory */
