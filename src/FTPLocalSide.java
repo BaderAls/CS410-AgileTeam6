@@ -1,4 +1,6 @@
 
+import org.apache.commons.io.FileUtils;
+
 import java.io.File;
 import java.io.IOException;
 
@@ -61,6 +63,13 @@ public class FTPLocalSide {
         File oldfile = new File(localPath);
         File newfile = new File(location + "/" + renameTo);
         return oldfile.renameTo(newfile);
+    }
+
+    /* Compare the content of two local files of the same type */
+    public boolean diff(String file1Path, String file2Path) throws IOException {
+        File file1 = new File(file1Path);
+        File file2 = new File(file2Path);
+        return FileUtils.contentEquals(file1, file2);
     }
 }
 /* END */
