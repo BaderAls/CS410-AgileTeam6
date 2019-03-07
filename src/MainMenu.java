@@ -62,7 +62,9 @@ public class MainMenu {
                                 System.out.println("Type 'quit' to exit the program");
                                 System.out.println("Type 'display' to display the contents of the directory.");
                                 System.out.println("Type 'newdirectory' to create a new directory.");
-                                System.out.println("Type 'cpydirectory' to copy a directory and all its  nested sub " +
+                                System.out.println("Type 'cpydirfromlocal' to copy a directory and all its  nested sub " +
+                                        "directories and files.");
+                                System.out.println("Type 'cpydirfromremote' to copy a directory and all its  nested sub " +
                                         "directories and files.");
                                 System.out.println("Type 'deldirectory' to delete a directory and all its sub files.");
 
@@ -242,38 +244,19 @@ public class MainMenu {
                                     directoryPath = scanner.nextLine();
                                     myftp.newDirectory(directoryPath);
                                 }
-                                else if (selection.equals("cpydirectory")){
-                                    String directoryPath = null;
-                                    String localDirectory = null;
-                                    String directoryName;
-                                    boolean remoteDirectoryExists = false;
-                                    while (!remoteDirectoryExists){
-                                        System.out.println("Enter The Path of the destination directory on the server:  ");
-                                        directoryPath = scanner.nextLine();
-                                        remoteDirectoryExists = myftp.directoryExists(directoryPath);
-                                        if(!remoteDirectoryExists){
-                                            System.out.println("There is no such a directory with this path");
-                                        }
-                                    }
-                                    boolean exists = false;
-                                    while (!exists){
-                                        System.out.println("Enter The Path of the local directory being copied:  ");
-                                        localDirectory = scanner.nextLine();
-                                        File dir = new File(localDirectory);
-                                        exists = dir.exists();
-                                        if(!exists){
-                                            System.out.println("There is no such a directory with this path");
-                                        }
-                                    }
+                                else if (selection.equals("cpydirfromlocal")){
+                                    System.out.println("Enter The Path of the destination directory on the server:  ");
+                                    String directoryPath = scanner.nextLine();
+                                    System.out.println("Enter The Path of the local directory being copied:  ");
+                                    String localDirectory = scanner.nextLine();
                                     System.out.println("Enter The Name of the parent directory for newly copied directories:  ");
-                                    directoryName = scanner.nextLine();
-                                    System.out.println("Copying...");
-                                    if(myftp.copyDirectory(directoryPath,localDirectory,directoryName)){
-                                        System.out.println("All files and folders successfully copied to the remote server.");
+                                    String directoryName = scanner.nextLine();
+                                    if(myftp.copyDirectory(directoryPath, localDirectory,directoryName)){
+                                        System.out.println("The directory has been copied successfully");
                                     }
-                                    else {
+                                    else{
                                         System.out.println("Some files and folders may not have" +
-                                                " been copied to the remote server successfully.");
+                                                " been copied successfully.");
                                     }
                                 }
                                 else if (selection.equals("deldirectory")){
@@ -296,6 +279,19 @@ public class MainMenu {
                                                 " been deleted successfully.");
                                     }
 
+                                }
+                                else if (selection.equals("cpydirfromremote")){
+                                    System.out.println("Enter The folder name:  ");
+                                    String fileName = scanner.nextLine();
+                                    System.out.println("Enter The destination path:  ");
+                                    String pathName = scanner.nextLine();
+                                    if(myftp.copyDirectoryFtp(pathName, fileName,fileName)){
+                                        System.out.println("The directory has been copied successfully");
+                                    }
+                                    else{
+                                        System.out.println("Some files and folders may not have" +
+                                                " been copied successfully.");
+                                    }
                                 }
                             } while (connectionCheck && (!selection.equals("quit")));
                         }
