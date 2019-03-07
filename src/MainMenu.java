@@ -31,7 +31,8 @@ public class MainMenu {
             System.out.println("Type 'connect' to establish connection to the server ");
             System.out.println("Type 'connectSaved' to reconnect with previous credentials");
             System.out.println("Type 'displaylocal' to display directories and files on local disk");
-            System.out.println("Type rename to rename a file on local disk");
+            System.out.println("Type 'rename' to rename a file on local disk");
+            System.out.println("Type 'checkequal' to check if two files are the same ");
             System.out.println("Type 'quit' to exit the program");
 
             selection = scanner.nextLine();
@@ -77,13 +78,16 @@ public class MainMenu {
                                 System.out.println("-*Group 6 FTPClient-* ");
                                 System.out.println("Type 'upload' to upload a file to the server");
                                 System.out.println("Type 'download' to retrieve file from the server");
+                                System.out.println("Type 'display' to display the contents of the directory.");
+                                System.out.println("Type 'displaylocal' to display the  conents of the local directories");
+                                System.out.println("Type 'rename' to rename a file on the remote server");
+                                System.out.println("Type 'newdirectory' to create a new directory.");
+                                System.out.println("Type 'cpydirlocal' to copy a directory and all its  nested sub "
+                                        + "directories and files.");
+                                System.out.println("Type 'cpydirremote' to copy a remote directory");
+                                System.out.println("Type 'deldirectory' to delete a directory and all its sub files.");
                                 System.out.println("Type 'disconnect' to stop the current session");
                                 System.out.println("Type 'quit' to exit the program");
-                                System.out.println("Type 'display' to display the contents of the directory.");
-                                System.out.println("Type 'newdirectory' to create a new directory.");
-                                System.out.println("Type 'cpydirectory' to copy a directory and all its  nested sub "
-                                        + "directories and files.");
-                                System.out.println("Type 'deldirectory' to delete a directory and all its sub files.");
 
                                 selection = scanner.nextLine();
 
@@ -96,7 +100,7 @@ public class MainMenu {
 
                                     do {
                                         myftp.displayRemote();
-                                        System.out.println("Is this the directory do you want to upload to ? (yes/no)");
+                                        System.out.println("Is this the directory do you want to upload to ? (yes/no/exit)");
                                         choice2 = scanner.nextLine();
 
                                         if (choice2.equals("no")) {
@@ -111,47 +115,49 @@ public class MainMenu {
                                             }
                                         }
 
-                                    } while (!choice2.equals("yes"));
+                                    } while (!choice2.equals("yes") && !choice2.equals("exit"));
 
-                                    do {
+                                    if(choice2.equals("yes")) {
 
-                                        String filePath;
-                                        System.out.println("Enter File Path:  ");
-                                        filePath = scanner.nextLine();
-                                        File myFile = new File(filePath);
-                                        myFiles.add(myFile);
-                                        System.out.println("Do you want to add more ? (yes/no)");
-                                        choice = scanner.nextLine();
-                                    } while (!choice.equals("no"));
+                                        do {
 
-                                    try {
+                                            String filePath;
+                                            System.out.println("Enter File Path:  ");
+                                            filePath = scanner.nextLine();
+                                            File myFile = new File(filePath);
+                                            myFiles.add(myFile);
+                                            System.out.println("Do you want to add more ? (yes/no)");
+                                            choice = scanner.nextLine();
+                                        } while (!choice.equals("no"));
 
-                                        ArrayList<File> failedFiles;
-                                        failedFiles = myftp.uploadToServer(myFiles);
+                                        try {
 
-                                        if (failedFiles.size() == 0) {
+                                            ArrayList<File> failedFiles;
+                                            failedFiles = myftp.uploadToServer(myFiles);
 
-                                            System.out.println("All files uploaded successfully");
-                                        } else {
+                                            if (failedFiles.size() == 0) {
 
-                                            System.out.println("WARNING: One or more file transfer(s) failed!");
-                                            System.out.println("Failed to transfer: ");
-                                            int i = 1;
+                                                System.out.println("All files uploaded successfully");
+                                            } else {
 
-                                            for (File x : failedFiles) {
+                                                System.out.println("WARNING: One or more file transfer(s) failed!");
+                                                System.out.println("Failed to transfer: ");
+                                                int i = 1;
 
-                                                System.out.println(i + ". " + x.getName());
-                                                i++;
+                                                for (File x : failedFiles) {
+
+                                                    System.out.println(i + ". " + x.getName());
+                                                    i++;
+                                                }
+
+                                                System.out.println("TIP: Make sure you typed the correct file path");
+
                                             }
+                                        } catch (IOException e) {
 
-                                            System.out.println("TIP: Make sure you typed the correct file path");
-
+                                            System.out.println("File upload failed");
                                         }
-                                    } catch (IOException e) {
-
-                                        System.out.println("File upload failed");
                                     }
-
                                     myftp.ChangeToMainDirectory(directcount);
                                 } else if (selection.equals("download")) {
 
@@ -159,13 +165,13 @@ public class MainMenu {
                                     String fileSelection = "";
                                     String multipleSelection = "";
                                     String localPathToDownload = "";
-                                    myftp.displayRemote();
+                                    //myftp.displayRemote();
                                     int countdirectories = 0;
                                     ArrayList<String> FilesToDownload = new ArrayList<String>();
 
                                     do {
                                         myftp.displayRemote();
-                                        System.out.println("Is this the directory do you want to download from ?(yes/no)");
+                                        System.out.println("Is this the directory do you want to download from ?(yes/no/exit)");
                                         downloadSelection = scanner.nextLine();
 
                                         if (downloadSelection.equals("no")) {
@@ -181,47 +187,50 @@ public class MainMenu {
                                             }
                                         }
 
-                                    } while (!downloadSelection.equals("yes"));
+                                    } while (!downloadSelection.equals("yes") && !(downloadSelection.equals("exit")));
 
-                                    do {
+                                    if(downloadSelection.equals("yes")) {
 
-                                        System.out.println("Enter the file name you want to download: ");
-                                        fileSelection = scanner.nextLine();
 
-                                        FilesToDownload.add(fileSelection);
+                                        do {
 
-                                        System.out.println("Do you want to add more ? (yes/no");
-                                        multipleSelection = scanner.nextLine();
-                                    } while (multipleSelection.equals("yes"));
+                                            System.out.println("Enter the file name you want to download: ");
+                                            fileSelection = scanner.nextLine();
 
-                                    System.out.println("Please enter the full local path to Download these files: ");
-                                    localPathToDownload = scanner.nextLine();
+                                            FilesToDownload.add(fileSelection);
 
-                                    try {
-                                        ArrayList<String> failedFiles;
+                                            System.out.println("Do you want to add more ? (yes/no");
+                                            multipleSelection = scanner.nextLine();
+                                        } while (multipleSelection.equals("yes"));
 
-                                        failedFiles = myftp.getRemoteFile(FilesToDownload, localPathToDownload);
+                                        System.out.println("Please enter the full local path to Download these files: ");
+                                        localPathToDownload = scanner.nextLine();
 
-                                        if (failedFiles.size() == 0) {
-                                            System.out.println("All files have been downloaded successfully");
-                                        } else {
+                                        try {
+                                            ArrayList<String> failedFiles;
 
-                                            System.out.println("WARNING: One or more file transfer(s) failed!");
-                                            System.out.println("Failed to download: ");
-                                            int i = 1;
+                                            failedFiles = myftp.getRemoteFile(FilesToDownload, localPathToDownload);
 
-                                            for (String x : failedFiles) {
+                                            if (failedFiles.size() == 0) {
+                                                System.out.println("All files have been downloaded successfully");
+                                            } else {
 
-                                                System.out.println(i + ". " + x);
-                                                i++;
+                                                System.out.println("WARNING: One or more file transfer(s) failed!");
+                                                System.out.println("Failed to download: ");
+                                                int i = 1;
+
+                                                for (String x : failedFiles) {
+
+                                                    System.out.println(i + ". " + x);
+                                                    i++;
+                                                }
+
+                                                System.out.println("TIP: Make sure you typed the correct file path");
+
                                             }
-
-                                            System.out.println("TIP: Make sure you typed the correct file path");
-
+                                        } catch (IOException e) {
+                                            System.out.println("File or Directory does not exist");
                                         }
-                                    } catch (IOException e) {
-                                        System.out.println("Serious problems!!");
-                                        e.printStackTrace();
                                     }
 
                                     myftp.ChangeToMainDirectory(countdirectories);
@@ -269,18 +278,69 @@ public class MainMenu {
                                     } while (!directorychoice.equals("no"));
 
                                     myftp.ChangeToMainDirectory(countDirectoryDisntace);
-                                } else if (selection.equals("newdirectory")) {
+                                }
+                                else if (selection.equals("rename")){
+
+                                    myftp.displayRemote();
+                                    String rChoice = "";
+                                    String rName = "";
+                                    int countDirectoryDist = 0;
+
+                                    do{
+                                        System.out.println("Do you want to rename a file in this directory ? (yes/no/exit)");
+                                        rChoice = scanner.nextLine();
+
+                                        if(rChoice.equals("yes")){
+
+                                            String oldie= "";
+                                            String newie = "";
+                                            boolean theret;
+
+                                            System.out.println("Enter the current name of the file you want to rename:");
+                                            oldie = scanner.nextLine();
+
+                                            System.out.println("Enter the new name you want to give to the file: ");
+                                            newie = scanner.nextLine();
+
+                                            theret = myftp.renameFile(oldie,newie);
+
+                                            if(theret){
+                                                System.out.println("Succesfully renamed!");
+                                            }
+                                            else{
+                                                System.out.println("No renaming occured");
+                                            }
+
+                                        }
+                                        else if (rChoice.equals("no")){
+
+                                            System.out.println("Type in the directory you want to rename (no / at front)");
+                                            rName = scanner.nextLine();
+
+                                            myftp.ChangeDirectory(rName);
+                                            myftp.displayRemote();
+
+                                            countDirectoryDist++;
+                                        }
+
+                                    }while(!rChoice.equals("exit"));
+
+
+                                    myftp.ChangeToMainDirectory(countDirectoryDist);
+
+                                }
+                                else if (selection.equals("newdirectory")) {
                                     String directoryPath;
                                     System.out.println("Enter The New Directory Path:  ");
                                     directoryPath = scanner.nextLine();
                                     myftp.newDirectory(directoryPath);
-                                } else if (selection.equals("cpydirectory")) {
+                                } else if (selection.equals("cpydirlocal")) {
                                     String directoryPath = null;
                                     String localDirectory = null;
                                     String directoryName;
                                     boolean remoteDirectoryExists = false;
                                     while (!remoteDirectoryExists) {
-                                        System.out.println("Enter The Path of the destination directory on the server:  ");
+                                        System.out.println("Where do you want to copy this directory on server:  ");
                                         directoryPath = scanner.nextLine();
                                         remoteDirectoryExists = myftp.directoryExists(directoryPath);
                                         if (!remoteDirectoryExists) {
@@ -297,7 +357,7 @@ public class MainMenu {
                                             System.out.println("There is no such a directory with this path");
                                         }
                                     }
-                                    System.out.println("Enter The Name of the parent directory for newly copied directories:  ");
+                                    System.out.println("Enter The Name You want to give on server: ");
                                     directoryName = scanner.nextLine();
                                     System.out.println("Copying...");
                                     if (myftp.copyDirectory(directoryPath, localDirectory, directoryName)) {
@@ -306,7 +366,23 @@ public class MainMenu {
                                         System.out.println("Some files and folders may not have"
                                                 + " been copied to the remote server successfully.");
                                     }
-                                } else if (selection.equals("deldirectory")) {
+                                }
+                                else if(selection.equals("cpydirremote")){
+
+                                    System.out.println("Enter The folder name:  ");
+                                    String fileName = scanner.nextLine();
+                                    System.out.println("Enter The destination path:  ");
+                                    String pathName = scanner.nextLine();
+                                    if(myftp.copyDirectoryFtp(pathName, fileName,fileName)){
+                                        System.out.println("The directory has been copied successfully");
+                                    }
+                                    else{
+                                        System.out.println("Some files and folders may not have" +
+                                                " been copied successfully.");
+                                    }
+
+                                }
+                                else if (selection.equals("deldirectory")) {
                                     String directoryPath = null;
                                     boolean directoryExists = false;
                                     while (!directoryExists) {
@@ -324,7 +400,46 @@ public class MainMenu {
                                         System.out.println("Some files and folders may not have"
                                                 + " been deleted successfully.");
                                     }
+                                }
 
+                                else if (selection.equals("displaylocal")){
+
+                                    String ldisplayselection = "";
+                                    String somepath = "";
+
+                                    System.out.println("Enter the local disk path you want to display");
+                                    somepath = scanner.nextLine();
+
+                                    FTPLocalSide mylocalftp = new FTPLocalSide(somepath);
+
+                                    do{
+                                        try {
+
+                                            mylocalftp.displayLocal();
+
+                                            System.out.println("Do you want to go further in the directory? (yes/no)");
+
+                                            ldisplayselection = scanner.nextLine();
+
+                                            if(ldisplayselection.equals("yes")){
+
+                                                String furtherString = "";
+                                                boolean someret = false;
+                                                System.out.println("Type in the folder/directory name");
+                                                furtherString = scanner.nextLine();
+                                                someret =  mylocalftp.changeDirectory(furtherString);
+
+                                                if(!someret){
+                                                    System.out.println("Directory doesn't exist");
+                                                }
+                                            }
+                                        }
+                                        catch (IOException e){
+
+                                            System.out.println("Problem encountered");
+
+                                        }
+                                    }while (!ldisplayselection.equals("no"));
                                 }
                             } while (connectionCheck && (!selection.equals("quit")));
                         }
@@ -352,12 +467,50 @@ public class MainMenu {
                 System.out.println("Type the new name you want to give to this file");
                 newname = scanner.nextLine();
 
-                retstat = mylocal.ChangeFileName(oldpath, newname);
+                try {
 
-                if (retstat) {
-                    System.out.println("Sucessfully renamed the file to: " + newname);
-                } else {
-                    System.out.println("Renaming failed");
+
+                    retstat = mylocal.ChangeFileName(oldpath, newname);
+
+                    if (retstat) {
+                        System.out.println("Sucessfully renamed the file to: " + newname);
+                    } else {
+                        System.out.println("Renaming failed");
+                    }
+                }catch (StringIndexOutOfBoundsException e){
+                    System.out.println("Something went wrong no renaming!");
+                }
+
+            }
+            else if(selection.equals("checkequal")){
+
+                String filename1 = "";
+                String filename2 = "";
+
+                System.out.println("Enter file1 path: ");
+                filename1 = scanner.nextLine();
+
+                System.out.println("Enter file2 path: ");
+                filename2 = scanner.nextLine();
+
+                try {
+
+
+                    int somereturn = mylocal.diff(filename1, filename2);
+
+                    if(somereturn == 1){
+                        System.out.println("The two files are the SAME!");
+                    }
+                    else if(somereturn == 0){
+                        System.out.println("The two files are DIFFERENT!");
+                    }
+                    else{
+                        System.out.println("One or more files do no exist!");
+                    }
+                }
+                catch (IOException e){
+
+                    System.out.println("Diff did not complete!");
                 }
 
             }

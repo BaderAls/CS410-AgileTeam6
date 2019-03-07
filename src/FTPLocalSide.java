@@ -1,5 +1,5 @@
 
-import org.apache.commons.net.io.FileUtils;
+import org.apache.commons.io.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -77,7 +77,7 @@ public class FTPLocalSide {
         return foundList;
     }
 
-    public boolean ChangeFileName(String localPath, String renameTo) {
+    public boolean ChangeFileName(String localPath, String renameTo) throws StringIndexOutOfBoundsException {
         String location = localPath.substring(0, localPath.lastIndexOf("/"));
         File oldfile = new File(localPath);
         File newfile = new File(location + "/" + renameTo);
@@ -85,10 +85,25 @@ public class FTPLocalSide {
     }
 
     /* Compare the content of two local files of the same type */
-    public boolean diff(String file1Path, String file2Path) throws IOException {
+    public int diff(String file1Path, String file2Path) throws IOException {
         File file1 = new File(file1Path);
         File file2 = new File(file2Path);
-        return FileUtils.contentEquals(file1, file2);
+
+        if(file1.exists() && file2.exists()) {
+
+            boolean someret = FileUtils.contentEquals(file1, file2);
+
+            if(someret){
+                return 1;
+            }
+            else{
+                return 0;
+            }
+
+        }
+        else{
+            return -1;
+        }
     }
 }
 /* END */

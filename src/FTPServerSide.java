@@ -490,12 +490,114 @@ public class FTPServerSide extends FTP {
     public void finalizeHistory() throws IOException{
         DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd-HH-mm");
         Date date = new Date();
-        String filename = ("Logfile\\"+dateFormat.format(date)+".txt");
+        String filename = ("Logfile||"+dateFormat.format(date)+".txt");
         Path file = Paths.get(filename);
         if(file==null)
             System.out.println("Error no valid Logfile");
         else
             Files.write(file, this.sessionHistory, Charset.forName("UTF-8"));
     }
+
+    public boolean copyFile(String fileName, String pathName)
+            throws IOException {
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        ftp.retrieveFile(fileName, outputStream);
+        InputStream is = new ByteArrayInputStream(outputStream.toByteArray());
+        // assuming backup directory is with in current working directory
+        ftp.setFileType(FTP.BINARY_FILE_TYPE);//binary files
+        ftp.changeWorkingDirectory(pathName);
+        //this overwrites the existing file
+        return ftp.storeFile(fileName, is);
+    }
+
+    public boolean copyDirectoryHelper(String desRemoteDirPath, String sourceParentDir, String remoteParentDir)
+            throws IOException {
+        boolean successful = true;
+        String firstDirectory = ftp.printWorkingDirectory();
+        String currentDirectory = ftp.printWorkingDirectory() + "/" + sourceParentDir;
+        if(!desRemoteDirPath.startsWith("/") && !desRemoteDirPath.startsWith("\\")){
+            desRemoteDirPath = "/" +desRemoteDirPath;
+        }
+        if(!directoryExists(desRemoteDirPath)){
+            System.out.println("The destination path does not exist");
+            return false;
+        }
+        else if(!( ftp.changeWorkingDirectory(currentDirectory))){
+            System.out.println("There is no folder with this name");
+            return false;
+        }
+        else{
+            String inremoteFilePath = desRemoteDirPath + "/" + remoteParentDir;
+            ftp.makeDirectory(inremoteFilePath);
+            FTPFile[] subFiles = ftp.listFiles(currentDirectory);
+            if (subFiles != null && subFiles.length > 0) {
+                for (FTPFile item : subFiles) {
+                    String remoteFilePath = desRemoteDirPath + "/" + remoteParentDir;
+                    if (remoteParentDir.equals("")) {
+                        remoteFilePath = desRemoteDirPath;
+                    }
+                    if (item.isFile()) {
+                        boolean uploaded;
+                        uploaded = copyFile(item.getName(), remoteFilePath);
+                        ftp.changeWorkingDirectory(currentDirectory);
+                        if (!uploaded) {
+                            successful = false;
+                        }
+                    } else {
+                        boolean created = ftp.makeDirectory(remoteFilePath+"/"+item.getName());
+                        if (!created) {
+                            successful = false;
+                        }
+
+                        // upload the sub directory
+                        String parent = item.getName();
+                        if (remoteParentDir.equals("")) {
+                            parent = "";
+                        }
+                        if(!(copyDirectoryHelper(remoteFilePath, item.getName(),
+                                parent))){
+                            successful = false;
+                        }
+                        ftp.changeWorkingDirectory(currentDirectory);
+                    }
+                }
+            }
+            ftp.changeWorkingDirectory(firstDirectory);
+            return successful;
+        }
+    }
+
+    public boolean copyDirectoryFtp(String desRemoteDirPath, String sourceParentDir, String remoteParentDir) throws IOException {
+
+        if(!( directoryExists(ftp.printWorkingDirectory() + "/" + sourceParentDir))){
+            System.out.println("There is no folder with this name");
+            return false;
+        }
+        boolean successful=true;
+        ftp.makeDirectory("/asdf1234qwer678");
+        if(!copyDirectoryHelper("/asdf1234qwer678",sourceParentDir,remoteParentDir)){
+            successful=false;
+        }
+        String currentDirectory = ftp.printWorkingDirectory();
+        ftp.changeWorkingDirectory("/asdf1234qwer678");
+        if(!copyDirectoryHelper(desRemoteDirPath,sourceParentDir,remoteParentDir)){
+            successful=false;
+        }
+        deleteDirectory("/asdf1234qwer678","");
+        ftp.changeWorkingDirectory(currentDirectory);
+        return successful;
+    }
+
+
+
+    /* Rename file in remote directory */
+    public boolean renameFile(String oldName, String replacement) throws IOException{
+
+
+        return ftp.rename(oldName,replacement);
+
+    }
+
+
 }
 /* END */
