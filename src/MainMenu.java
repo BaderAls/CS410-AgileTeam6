@@ -1,4 +1,6 @@
 
+import org.apache.commons.net.ftp.FTP;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -6,12 +8,16 @@ import java.util.Scanner;
 
 public class MainMenu {
 
+    FTPLocalSide myLocal;
+    FTPServerSide myftp;
+
     public static void main(String[] args) {
 
         int portNum;
         String hostAddress;
         FTPLocalSide mylocal = new FTPLocalSide();
         // FTPLocalSide mylocal2 = new FTPLocalSide(""); //
+        FTPServerSide myftp = new FTPServerSide();
 
         Scanner scanner = new Scanner(System.in);
         String selection = "";
@@ -23,6 +29,7 @@ public class MainMenu {
             System.out.println();
             System.out.println("*-Group 6 FTPClient-*");
             System.out.println("Type 'connect' to establish connection to the server ");
+            System.out.println("Type 'connectSaved' to reconnect with previous credentials");
             System.out.println("Type 'displaylocal' to display directories and files on local disk");
             System.out.println("Type rename to rename a file on local disk");
             System.out.println("Type 'quit' to exit the program");
@@ -31,24 +38,34 @@ public class MainMenu {
 
             System.out.println("You chose... " + selection);
 
-            if (selection.equals("connect")) {
-
+            if (selection.equals("connect") || selection.equalsIgnoreCase("connectSaved")) {
                 exceptionCounter = 0;
+                if(selection.equals("connect")) {
+                    System.out.println("Enter host address");
+                    hostAddress = scanner.nextLine();
 
-                System.out.println("Enter host address");
-                hostAddress = scanner.nextLine();
+                    System.out.println("Enter port number");
+                    portNum = scanner.nextInt();
+                    scanner.nextLine();
 
-                System.out.println("Enter port number");
-                portNum = scanner.nextInt();
-                scanner.nextLine();
-
-                FTPServerSide myftp = new FTPServerSide(hostAddress, portNum);
-
-                while (exceptionCounter < 2) {
-
+                    myftp = new FTPServerSide(hostAddress, portNum);
+                }
+                else {
                     try {
-                        ret = myftp.ConnectToServer();
-
+                        myftp = new FTPServerSide("Test");
+                    } catch (IOException e){
+                        System.out.println("Error");
+                    }
+                }
+                while (exceptionCounter < 2) {
+                    try {
+                        if (selection.equals("connect")) {
+                            ret = myftp.ConnectToServer();
+                            if (!myftp.LoginToServer())
+                                return;
+                        }
+                        else
+                            ret = 1;
                         if (ret == 1) {
                             System.out.println("Connected to the Server");
                             connectionCheck = true;
@@ -385,5 +402,10 @@ public class MainMenu {
                 }while (!ldisplayselection.equals("no"));
             }
         } while (!selection.equals("quit"));
+        try {
+            myftp.finalizeHistory();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }

@@ -6,7 +6,10 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Scanner;
 
@@ -16,12 +19,26 @@ public class FTPServerSide extends FTP {
     private FTPClient ftp;
     private String address;
     private int port;
+    private List<String> sessionHistory;
+
+    public FTPServerSide(){
+        ftp = new FTPClient();
+        sessionHistory = new ArrayList<>();
+    }
 
     /* Class constructor */
     public FTPServerSide(String serverAdd, int connectPort) {
         ftp = new FTPClient();
         address = serverAdd;
         port = connectPort;
+        sessionHistory = new ArrayList<>();
+    }
+
+    /*Constructor for saved connection*/
+    public FTPServerSide(String in) throws IOException {
+        ftp = new FTPClient();
+        sessionHistory = new ArrayList<>();
+        useSavedConnection();
     }
 
     /*
@@ -30,14 +47,13 @@ public class FTPServerSide extends FTP {
      */
     public int ConnectToServer() throws IOException {
         int reply; // local variable to check initial connection status.
-
         System.out.println("Connecting to..." + address);
         ftp.connect(address, port);
-        ftp.login("anonymous", "");
         reply = ftp.getReplyCode();
         if (!FTPReply.isPositiveCompletion((reply))) {
-            return -1;
+                return -1;
         }
+        logHistory(1," ");
         return 1;
     }
 
@@ -50,36 +66,30 @@ public class FTPServerSide extends FTP {
         String username = "";
         String password = "";
         int reply;
-        boolean cont = true;
-        String selection;
-        System.out.println("Would you like to use a saved connection? (y/n)");
-        selection = sc.nextLine();
-        if (selection.equals("y")) {
-            useSavedConnection();
-        } else {
-            while (cont) {
-                System.out.println("Please Enter Username and Password (or quit as either to exit");
-                System.out.println("Username: \t");
+        while (true) {
+                System.out.println("Please Enter Username and Password (or quit as either to exit)");
+                System.out.println("Username:");
                 username = sc.nextLine();
-                System.out.println("Password");
-                password = sc.nextLine();
-                if (username.equals("quit") || password.equals("quit")) {
+                if (username.equalsIgnoreCase("quit"))
                     return false;
-                }
+                System.out.println("Password:");
+                password = sc.nextLine();
+                if (password.equalsIgnoreCase("quit"))
+                    return false;
                 ftp.login(username, password);
                 reply = ftp.getReplyCode();
                 if (reply != 230) {
                     System.out.println("Invalid User Login");
                     ftp.logout();
                     ftp.connect(address, port);
-                } else {
-                    System.out.println("Login Successful: Logged in as " + username);
-                    cont = false;
                 }
-            }
+                else {
+                    saveUserConnection(username, password);
+                    System.out.println("Login Successful: Logged in as " + username);
+                    logHistory(2,username);
+                    return true;
+                }
         }
-        saveUserConnection(username, password);
-        return true;
     }
 
     /*
@@ -116,7 +126,8 @@ public class FTPServerSide extends FTP {
                 failedFiles.add(file);
             }
         }
-
+        int successes = myFiles.size() - failedFiles.size();
+        logHistory(3,String.valueOf(successes));
         if (is != null) {
 
             is.close();
@@ -135,7 +146,7 @@ public class FTPServerSide extends FTP {
 
             System.out.println("Log out unsuccessful");
         }
-
+        logHistory(4,"");
         return false;
     }
 
@@ -174,7 +185,7 @@ public class FTPServerSide extends FTP {
         if (pathname.length() == 0) {
             return false;
         }
-
+        logHistory(5,pathname);
         return ftp.deleteFile(pathname);
     }
 
@@ -225,6 +236,8 @@ public class FTPServerSide extends FTP {
             }
         }
 
+        int successes = remoteFilePaths.size() - failedFiles.size();
+        logHistory(10, String.valueOf(successes));
         if (os != null) {
             os.close();
         }
@@ -237,17 +250,23 @@ public class FTPServerSide extends FTP {
     public void saveUserConnection(String username, String password) throws IOException {
         List<String> lines = new ArrayList<>();
         lines.add(username);
-        lines.add(password);
+        lines.add(this.address);
+        lines.add(String.valueOf(this.port));
         Path file = Paths.get("savedCred.txt");
         Files.write(file, lines, Charset.forName("UTF-8"));
     }
 
     /*reads from last used login to establish a new connection*/
     public void useSavedConnection() throws IOException {
+        Scanner sc = new Scanner(System.in);
         BufferedReader reader = new BufferedReader(new FileReader("savedCred.txt"));
         String username = reader.readLine();
-        String password = reader.readLine();
-        System.out.println(username + password);
+        this.address = reader.readLine();
+        this.port = Integer.parseInt(reader.readLine());
+        System.out.println("Please input password for user "+username+":");
+        String password = sc.nextLine();
+        System.out.println("Connecting to Server at "+address+" using port "+port);
+        ftp.connect(address, port);
         ftp.login(username, password);
         int reply = ftp.getReplyCode();
         if (reply != 230) {
@@ -255,6 +274,8 @@ public class FTPServerSide extends FTP {
             ftp.logout();
         } else {
             System.out.println("Connected to FTP user: " + username);
+            logHistory(1," ");
+            logHistory(2,username);
         }
     }
 
@@ -283,6 +304,7 @@ public class FTPServerSide extends FTP {
         boolean success = ftp.makeDirectory(dirToCreate);
         if (success) {
             System.out.println("Successfully created directory: " + dirToCreate);
+            logHistory(7,dirToCreate);
         } else {
             System.out.println("Failed to create directory. See server's reply.");
         }
@@ -342,6 +364,8 @@ public class FTPServerSide extends FTP {
                 }
             }
         }
+        if (successful == true)
+            logHistory(8, localParentDir);
         return successful;
     }
 
@@ -395,6 +419,8 @@ public class FTPServerSide extends FTP {
                 successful = false;
             }
         }
+        if (successful==true)
+            logHistory(9,parentDir);
         return successful;
     }
 
@@ -416,6 +442,60 @@ public class FTPServerSide extends FTP {
             }
         }
         return foundList;
+    }
+
+    /*
+     * Logs activity completed by the ftp client and the associated reply codes
+     */
+    public void logHistory(int type, String info) {
+        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd   HH:mm:ss");
+        Date date = new Date();
+        switch (type) {
+            case 1:
+                this.sessionHistory.add("Connected to "+address+" at port "+port+" - "+dateFormat.format(date));
+                break;
+            case 2:
+                sessionHistory.add("Logged in as "+info+" - "+dateFormat.format(date));
+                break;
+            case 3:
+                sessionHistory.add("Uploaded "+ info +" files from local to remote"+" - "+dateFormat.format(date));
+                break;
+            case 4:
+                sessionHistory.add("Logged out"+" - "+dateFormat.format(date));
+                break;
+            case 5:
+                sessionHistory.add("Deleted file "+ info+" from remote"+" - "+dateFormat.format(date));
+                break;
+            case 6:
+                sessionHistory.add("Deleted "+info +"files from remote"+" - "+dateFormat.format(date));
+                break;
+            case 7:
+                sessionHistory.add("Created directory" + info +" on remote"+" - "+dateFormat.format(date));
+                break;
+            case 8:
+                sessionHistory.add("Uploaded " + info + "directory to remote"+" - "+dateFormat.format(date));
+                break;
+            case 9:
+                sessionHistory.add("Deleted the " + info + " directory from remote"+" - "+dateFormat.format(date));
+                break;
+            case 10:
+                sessionHistory.add("Downloaded "+info+"files from remote to local"+" - "+dateFormat.format(date));
+                break;
+            default:
+                System.out.println("Unexpected input: logHistory");
+
+        }
+    }
+
+    public void finalizeHistory() throws IOException{
+        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd-HH-mm");
+        Date date = new Date();
+        String filename = ("Logfile\\"+dateFormat.format(date)+".txt");
+        Path file = Paths.get(filename);
+        if(file==null)
+            System.out.println("Error no valid Logfile");
+        else
+            Files.write(file, this.sessionHistory, Charset.forName("UTF-8"));
     }
 }
 /* END */
